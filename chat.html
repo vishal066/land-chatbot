@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Land Records Chatbot</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f3f4f6;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .chat-container {
+      max-width: 480px;
+      height: 620px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .chat-subtitle {
+      font-weight: 400;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    #chat-box {
+      padding: 12px 16px;
+      flex: 1;
+      overflow-y: auto;
+      background: #f9fafb;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .msg-user,
+    .msg-bot {
+      margin: 4px 0;
+      padding: 8px 12px;
+      border-radius: 16px;
+      max-width: 80%;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background: #2563eb;
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-bot {
+      align-self: flex-start;
+      background: #e5e7eb;
+      color: #111827;
+      border-bottom-left-radius: 4px;
+    }
+
+    #input-row {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      border-top: 1px solid #e5e7eb;
+      background: #ffffff;
+    }
+
+    #lang {
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+
+    #message {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      padding: 8px 12px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    #message:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
+    }
+
+    #send-btn {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 16px;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #send-btn:hover {
+      background: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      Land Records Chatbot
+      <div class="chat-subtitle">Ask about survey numbers, pahani, adangal (EN / TE)</div>
+    </div>
+
+    <div id="chat-box"></div>
+
+    <div id="input-row">
+      <select id="lang">
+        <option value="en">EN</option>
+        <option value="te">TE</option>
+      </select>
+      <input id="message" type="text" placeholder="Type your question..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById('chat-box');
+    const msgInput = document.getElementById('message');
+    const langSelect = document.getElementById('lang');
+    const sendBtn = document.getElementById('send-btn');
+
+    function addMessage(text, cls) {
+      const p = document.createElement('div');
+      p.className = cls;
+      p.textContent = text;
+      chatBox.appendChild(p);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = msgInput.value.trim();
+      const lang = langSelect.value;
+      if (!text) return;
+
+      addMessage('You: ' + text, 'msg-user');
+      msgInput.value = '';
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, lang: lang })
+        });
+
+        if (!res.ok) {
+          addMessage('Bot: Error ' + res.status, 'msg-bot');
+          return;
+        }
+
+        const data = await res.json();
+        addMessage('Bot: ' + data.reply, 'msg-bot');
+      } catch (err) {
+        addMessage('Bot: Network error', 'msg-bot');
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    msgInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+{
+    "intents": [
+      {
+        "intent_id": "greet",
+        "patterns": {
+          "en": ["hi", "hello", "hey", "good morning", "good evening"],
+          "te": ["హాయ్", "నమస్తే", "హలో", "శుభోదయం", "శుభ సాయంత్రం"]
+        },
+        "responses": {
+          "en": "Hello! I can help you with common land record questions.",
+          "te": "నమస్తే! భూ రికార్డులకు సంబంధించిన సాధారణ ప్రశ్నలకు నేను సహాయం చేస్తాను."
+        }
+      },
+      {
+        "intent_id": "what_is_land_record",
+        "patterns": {
+          "en": ["what is land record", "meaning of land record", "what is pahani", "what is adangal"],
+          "te": ["భూ రికార్డు అంటే ఏమిటి", "పహాణి అంటే ఏమిటి", "అడంగల్ అంటే ఏమిటి"]
+        },
+        "responses": {
+          "en": "Land records are official government records that show details of land ownership, area, survey number and related information.",
+          "te": "భూ రికార్డులు అనేవి భూమి యాజమాన్యం, విస్తీర్ణం, సర్వే నంబర్ మరియు సంబంధిత వివరాలను చూపే ప్రభుత్వ అధికారిక రికార్డులు."
+        }
+      },
+      {
+        "intent_id": "view_land_record_online",
+        "patterns": {
+          "en": [
+            "how to see land record online",
+            "how to check pahani online",
+            "how to check adangal online",
+            "how to view land details on website"
+          ],
+          "te": [
+            "ఆన్‌లైన్‌లో భూ రికార్డు ఎలా చూడాలి",
+            "ఆన్‌లైన్‌లో పహాణి ఎలా చూడాలి",
+            "ఆన్‌లైన్‌లో అడంగల్ ఎలా చూడాలి",
+            "వెబ్‌సైట్‌లో భూ వివరాలు ఎలా చూడాలి"
+          ]
+        },
+        "responses": {
+          "en": "You can view land records online on your state land records portal. Select your district, mandal, village and survey number or khata number to see details.",
+          "te": "మీ రాష్ట్ర భూ రికార్డు పోర్టల్‌లోకి వెళ్లి జిల్లా, మండలం, గ్రామం మరియు సర్వే నంబర్ లేదా ఖాతా నంబర్ ఎంపిక చేసి భూ రికార్డులు ఆన్‌లైన్‌లో చూడవచ్చు."
+        }
+      },
+      {
+        "intent_id": "check_survey_number",
+        "patterns": {
+          "en": [
+            "how to find survey number",
+            "how to check my survey number",
+            "where can i see survey number"
+          ],
+          "te": [
+            "నా సర్వే నంబర్ ఎలా తెలుసుకోవాలి",
+            "సర్వే నంబర్ ఎక్కడ చూడాలి",
+            "నా భూమి సర్వే నంబర్ ఎలా చెక్ చేయాలి"
+          ]
+        },
+        "responses": {
+          "en": "Your survey number is available in your land records like pahani/adangal and on the state land records portal when you search with owner name or khata number.",
+          "te": "మీ సర్వే నంబర్ పహాణి/అడంగల్ వంటి భూ రికార్డుల్లో మరియు రాష్ట్ర భూ రికార్డు పోర్టల్‌లో యజమాని పేరు లేదా ఖాతా నంబర్ ద్వారా శోధించినప్పుడు కనిపిస్తుంది."
+        }
+      },
+      {
+        "intent_id": "owner_name_mismatch",
+        "patterns": {
+          "en": [
+            "owner name is wrong",
+            "name is incorrect in land record",
+            "how to correct name in pahani",
+            "name mismatch in land record"
+          ],
+          "te": [
+            "భూ రికార్డులో యజమాని పేరు తప్పుగా ఉంది",
+            "పహాణిలో పేరు తప్పు ఉంది",
+            "నా పేరు భూ రికార్డులో తప్పుగా ఉంది",
+            "భూ రికార్డ్‌లో పేరు మార్చాలి"
+          ]
+        },
+        "responses": {
+          "en": "If the owner name in the land record is wrong, you usually need to apply for correction at the local revenue office with valid ID and supporting documents.",
+          "te": "భూ రికార్డులో యజమాని పేరు తప్పుగా ఉంటే, సరైన ఆధార్/ఐడీ ప్రూఫ్ మరియు అవసరమైన డాక్యుమెంట్లతో స్థానిక రెవెన్యూ కార్యాలయంలో పేరు సవరణకు దరఖాస్తు చేయాలి."
+        }
+      },
+      {
+        "intent_id": "portal_help",
+        "patterns": {
+          "en": [
+            "how to use land records portal",
+            "how to use dharani portal",
+            "steps to check pahani on website",
+            "steps to check ror 1b online"
+          ],
+          "te": [
+            "ల్యాండ్ రికార్డు పోర్టల్ ఎలా వాడాలి",
+            "ధరణి పోర్టల్‌లో భూ రికార్డులు ఎలా చూడాలి",
+            "వెబ్‌సైట్‌లో పహాణి ఎలా చెక్ చేయాలి",
+            "ఆన్‌లైన్‌లో ROR 1B ఎలా చూడాలి"
+          ]
+        },
+        "responses": {
+          "en": "To use the land records portal, open your state website, choose district, mandal and village, then search using survey number or khata number to view pahani / ROR-1B details.",
+          "te": "ల్యాండ్ రికార్డు పోర్టల్ ఉపయోగించడానికి, మీ రాష్ట్ర వెబ్‌సైట్‌లోకి వెళ్లి జిల్లా, మండలం, గ్రామం ఎంపిక చేసి, సర్వే నంబర్ లేదా ఖాతా నంబర్ ద్వారా శోధించి పహాణి / ROR-1B వివరాలు చూడాలి."
+        }
+      },
+      {
+        "intent_id": "what_is_ror_khata",
+        "patterns": {
+          "en": [
+            "what is ror 1b",
+            "meaning of ror",
+            "what is khata number",
+            "what is khata",
+            "what is 1b document"
+          ],
+          "te": [
+            "ROR 1B అంటే ఏమిటి",
+            "ROR అంటే ఏమిటి",
+            "ఖాతా నంబర్ అంటే ఏమిటి",
+            "ఖాతా అంటే ఏమిటి",
+            "1B డాక్యుమెంట్ అంటే ఏమిటి"
+          ]
+        },
+        "responses": {
+          "en": "ROR 1B is a Record of Rights document that shows land owner name, survey number, khata number, land extent and type. Khata number is an account number used to group land holdings of an owner in the records.",
+          "te": "ROR 1B అనేది హక్కుల రికార్డు (Record of Rights) పత్రం, ఇందులో యజమాని పేరు, సర్వే నంబర్, ఖాతా నంబర్, భూమి విస్తీర్ణం మరియు రకం వంటి వివరాలు ఉంటాయి. ఖాతా నంబర్ అనేది ఒక యజమాని పేరు మీద ఉన్న భూములను రికార్డుల్లో గుంపుగా చూపించే ఖాతా సంఖ్య."
+        }
+      },
+      {
+        "intent_id": "fallback",
+        "patterns": {
+          "en": [],
+          "te": []
+        },
+        "responses": {
+          "en": "Sorry, I did not understand your question. Please try asking about land records, survey numbers or online viewing.",
+          "te": "క్షమించండి, మీ ప్రశ్న నాకు అర్థం కాలేదు. దయచేసి భూ రికార్డులు, సర్వే నంబర్లు లేదా ఆన్‌లైన్‌లో చూడడం గురించి మళ్లీ అడగండి."
+        }
+      },
+      {
+        "intent_id": "you_are_welcome",
+        "patterns": {
+          "en": [
+            "thank you!" ,
+            "thanks a lot!" ,
+            "thanks for your help!" ,
+            "thank you very much!"],
+          "te": [
+            "ధన్యవాదాలు!" ,
+            "చాలా ధన్యవాదాలు!" ,
+            "మీ సహాయానికి ధన్యవాదాలు!" ,
+            "మీకెంతో ధన్యవాదాలు!"
+          ]
+        },
+        "responses": {
+          "en": " You're welcome! If you have any more questions about land records, feel free to ask.",
+          "te": "మీకు స్వాగతం! భూ రికార్డుల గురించి మీకు మరిన్ని ప్రశ్నలు ఉంటే, దయచేసి అడగండి."
+        }
+      }
+    ]
+  }
+  
