@@ -1,0 +1,9 @@
+[build]
+  publish = "."
+  command = "echo 'No build required'"
+
+[[redirects]]
+  from = "/chat"
+  to = "https://land-chatbot.onrender.com/chat"
+  status = 200
+  force = true
