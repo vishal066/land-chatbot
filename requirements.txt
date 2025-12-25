@@ -1,4 +1,5 @@
 fastapi
-uvicorn
+uvicorn[standard]
 rapidfuzz
 pydantic
+pyodbc
