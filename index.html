@@ -167,7 +167,7 @@
       msgInput.value = '';
 
       try {
-        const res = await fetch('https://land-chatbot.onrender.com/chat', {
+        const res = await fetch('/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
