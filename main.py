@@ -5,11 +5,43 @@ from typing import Dict, List, Tuple, Optional, Literal
 import pyodbc
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import ValidationError, BaseModel
 from rapidfuzz import process, fuzz
 
 from models import ChatRequest, ChatResponse, IntentStore, SupportedLang
 
+# ---------- PATHS & FASTAPI APP ----------
+
+BASE_DIR = Path(__file__).parent
+INTENTS_PATH = BASE_DIR / "intents.json"
+
+app = FastAPI(
+    title="Land Records FAQ Chatbot",
+    description=(
+        "Lightweight intent-based chatbot for common land record queries "
+        "in English and Telugu, plus SQL-based land record lookup."
+    ),
+    version="2.0.0",
+)
+
+# Serve static files if needed (CSS/JS later)
+app.mount("/static", StaticFiles(directory=BASE_DIR, html=True), name="static")
+
+# Serve index.html at root (frontend UI)
+@app.get("/", include_in_schema=False)
+def serve_index():
+    return FileResponse(BASE_DIR / "index.html")
+
+# Enable CORS for web UI (if you ever serve from another origin)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # for development; later restrict
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---------- SQL SERVER CONFIG ----------
 
@@ -66,29 +98,6 @@ def get_land_record(state_id: int, district_id: int, mandal_id: int, ror_number:
 
 # ---------- INTENT JSON CONFIG ----------
 
-INTENTS_PATH = Path(__file__).parent / "intents.json"
-
-app = FastAPI(
-    title="Land Records FAQ Chatbot",
-    description=(
-        "Lightweight intent-based chatbot for common land record queries "
-        "in English and Telugu, plus SQL-based land record lookup."
-    ),
-    version="2.0.0",
-)
-from fastapi.staticfiles import StaticFiles
-
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
-
-# Enable CORS for web UI
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # for development; later restrict
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 def load_intents() -> IntentStore:
     if not INTENTS_PATH.exists():
         raise FileNotFoundError(f"intents.json not found at {INTENTS_PATH}")
@@ -108,9 +117,9 @@ def build_pattern_index(
     index: Dict[SupportedLang, List[Tuple[str, str]]] = {"en": [], "te": []}
     for intent in store.intents:
         for pattern in intent.patterns.en:
-            index["en"].append((pattern.lower(), intent.intent_id))  # ✅ LOWERCASE
+            index["en"].append((pattern.lower(), intent.intent_id))
         for pattern in intent.patterns.te:
-            index["te"].append((pattern.lower(), intent.intent_id))  # ✅ LOWERCASE
+            index["te"].append((pattern.lower(), intent.intent_id))
     return index
 
 PATTERN_INDEX = build_pattern_index(INTENT_STORE)
@@ -126,7 +135,7 @@ def find_best_intent(
     texts = [p[0] for p in candidates]
 
     best = process.extractOne(
-        message.lower(),  # ✅ FIXED: lowercase for Telugu/English matching
+        message.lower(),
         texts,
         scorer=fuzz.WRatio,
     )
@@ -157,6 +166,8 @@ def find_best_intent(
         return fallback_intent, float(score), True
 
     return matched_intent, float(score), matched_intent.intent_id == "fallback"
+
+# ---------- SYSTEM & TEST ROUTES ----------
 
 @app.get("/health", tags=["system"])
 def health_check():
@@ -467,7 +478,6 @@ def handle_land_lookup(req: ChatRequest) -> ChatResponse:
         score=0.0,
         fallback=True,
     )
-
 
 # ---------- MAIN CHAT ENDPOINT ----------
 
