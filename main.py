@@ -1,9 +1,9 @@
 import json
 import os
+import psycopg2  # PostgreSQL driver
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Literal
 
-import pyodbc
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -23,7 +23,7 @@ app = FastAPI(
         "Lightweight intent-based chatbot for common land record queries "
         "in English and Telugu, plus SQL-based land record lookup."
     ),
-    version="2.1.0",  # Updated for Azure SQL
+    version="2.4.0",  # Railway PostgreSQL
 )
 
 # Serve static files if needed (CSS/JS later)
@@ -34,37 +34,35 @@ app.mount("/static", StaticFiles(directory=BASE_DIR, html=True), name="static")
 def serve_index():
     return FileResponse(BASE_DIR / "index.html")
 
-# Enable CORS for web UI (if you ever serve from another origin)
+# Enable CORS for web UI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # for development; later restrict
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ---------- AZURE SQL CONFIG (Environment Variables) ----------
-AZURE_SQL_SERVER = os.getenv("AZURE_SQL_SERVER")  # your-server.database.windows.net
-AZURE_SQL_DATABASE = os.getenv("AZURE_SQL_DATABASE", "LandChatbotDemo")
-AZURE_SQL_USER = os.getenv("AZURE_SQL_USER")       # user@your-server
-AZURE_SQL_PASSWORD = os.getenv("AZURE_SQL_PASSWORD")
+# ---------- RAILWAY POSTGRESQL CONFIG ----------
+PG_HOST = os.getenv("AZURE_SQL_SERVER")
+PG_PORT = os.getenv("AZURE_SQL_PORT", "5432")
+PG_DB = os.getenv("AZURE_SQL_DATABASE", "railway")
+PG_USER = os.getenv("AZURE_SQL_USER")
+PG_PASSWORD = os.getenv("AZURE_SQL_PASSWORD")
 
 def get_connection():
-    """Azure SQL connection with required encryption settings."""
-    if not all([AZURE_SQL_SERVER, AZURE_SQL_USER, AZURE_SQL_PASSWORD]):
-        raise ValueError("Missing Azure SQL environment variables")
+    """Railway PostgreSQL connection - 100% drop-in replacement."""
+    if not all([PG_HOST, PG_USER, PG_PASSWORD]):
+        raise ValueError("Missing PostgreSQL environment variables")
     
-    conn_str = (
-        "DRIVER={ODBC Driver 17 for SQL Server};"
-        f"SERVER={AZURE_SQL_SERVER};"
-        f"DATABASE={AZURE_SQL_DATABASE};"
-        f"UID={AZURE_SQL_USER};"
-        f"PWD={AZURE_SQL_PASSWORD};"
-        "Encrypt=yes;"
-        "TrustServerCertificate=no;"
-        "Connection Timeout=30;"
+    return psycopg2.connect(
+        host=PG_HOST,
+        port=PG_PORT,
+        database=PG_DB,
+        user=PG_USER,
+        password=PG_PASSWORD,
+        connect_timeout=30
     )
-    return pyodbc.connect(conn_str)
 
 def list_states():
     with get_connection() as conn:
@@ -77,7 +75,7 @@ def list_districts(state_id: int):
         cur = conn.cursor()
         cur.execute(
             "SELECT DistrictID, DistrictName "
-            "FROM Districts WHERE StateID = ? ORDER BY DistrictID",
+            "FROM Districts WHERE StateID = %s ORDER BY DistrictID",
             (state_id,),
         )
         return cur.fetchall()
@@ -87,7 +85,7 @@ def list_mandals(district_id: int):
         cur = conn.cursor()
         cur.execute(
             "SELECT MandalID, MandalName "
-            "FROM Mandals WHERE DistrictID = ? ORDER BY MandalID",
+            "FROM Mandals WHERE DistrictID = %s ORDER BY MandalID",
             (district_id,),
         )
         return cur.fetchall()
@@ -99,7 +97,7 @@ def get_land_record(state_id: int, district_id: int, mandal_id: int, ror_number:
             """
             SELECT OwnerName, Email, Phone
             FROM LandRecords
-            WHERE StateID = ? AND DistrictID = ? AND MandalID = ? AND RORNumber = ?
+            WHERE StateID = %s AND DistrictID = %s AND MandalID = %s AND RORNumber = %s
             """,
             (state_id, district_id, mandal_id, ror_number),
         )
