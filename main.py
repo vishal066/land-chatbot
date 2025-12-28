@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Literal
 
@@ -13,7 +14,6 @@ from rapidfuzz import process, fuzz
 from models import ChatRequest, ChatResponse, IntentStore, SupportedLang
 
 # ---------- PATHS & FASTAPI APP ----------
-
 BASE_DIR = Path(__file__).parent
 INTENTS_PATH = BASE_DIR / "intents.json"
 
@@ -23,7 +23,7 @@ app = FastAPI(
         "Lightweight intent-based chatbot for common land record queries "
         "in English and Telugu, plus SQL-based land record lookup."
     ),
-    version="2.0.0",
+    version="2.1.0",  # Updated for Azure SQL
 )
 
 # Serve static files if needed (CSS/JS later)
@@ -43,17 +43,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------- SQL SERVER CONFIG ----------
-
-SQL_SERVER = r"DATTA\SQLEXPRESS"  # same as SSMS server name
-SQL_DATABASE = "LandChatbotDemo"
+# ---------- AZURE SQL CONFIG (Environment Variables) ----------
+AZURE_SQL_SERVER = os.getenv("AZURE_SQL_SERVER")  # your-server.database.windows.net
+AZURE_SQL_DATABASE = os.getenv("AZURE_SQL_DATABASE", "LandChatbotDemo")
+AZURE_SQL_USER = os.getenv("AZURE_SQL_USER")       # user@your-server
+AZURE_SQL_PASSWORD = os.getenv("AZURE_SQL_PASSWORD")
 
 def get_connection():
+    """Azure SQL connection with required encryption settings."""
+    if not all([AZURE_SQL_SERVER, AZURE_SQL_USER, AZURE_SQL_PASSWORD]):
+        raise ValueError("Missing Azure SQL environment variables")
+    
     conn_str = (
         "DRIVER={ODBC Driver 17 for SQL Server};"
-        f"SERVER={SQL_SERVER};"
-        f"DATABASE={SQL_DATABASE};"
-        "Trusted_Connection=yes;"
+        f"SERVER={AZURE_SQL_SERVER};"
+        f"DATABASE={AZURE_SQL_DATABASE};"
+        f"UID={AZURE_SQL_USER};"
+        f"PWD={AZURE_SQL_PASSWORD};"
+        "Encrypt=yes;"
+        "TrustServerCertificate=no;"
+        "Connection Timeout=30;"
     )
     return pyodbc.connect(conn_str)
 
@@ -97,7 +106,6 @@ def get_land_record(state_id: int, district_id: int, mandal_id: int, ror_number:
         return cur.fetchone()
 
 # ---------- INTENT JSON CONFIG ----------
-
 def load_intents() -> IntentStore:
     if not INTENTS_PATH.exists():
         raise FileNotFoundError(f"intents.json not found at {INTENTS_PATH}")
@@ -168,18 +176,19 @@ def find_best_intent(
     return matched_intent, float(score), matched_intent.intent_id == "fallback"
 
 # ---------- SYSTEM & TEST ROUTES ----------
-
 @app.get("/health", tags=["system"])
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "db": "azure_sql"}
 
 @app.get("/states-test")
 def states_test():
-    rows = list_states()
-    return [{"id": r.StateID, "name": r.StateName} for r in rows]
+    try:
+        rows = list_states()
+        return [{"id": r.StateID, "name": r.StateName} for r in rows]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"DB Error: {str(e)}")
 
 # ---------- SIMPLE SESSION STATE FOR LAND LOOKUP ----------
-
 class FlowState(BaseModel):
     mode: Literal["unknown", "faq", "land_lookup"] = "unknown"
     step: Literal["ask_state", "ask_district", "ask_mandal", "ask_ror", "done"] = "done"
@@ -204,13 +213,27 @@ def format_list_with_numbers(title: str, rows, name_attr: str) -> str:
 
 def handle_land_lookup(req: ChatRequest) -> ChatResponse:
     """Multi-step flow: state -> district -> mandal -> ROR lookup via SQL."""
-
     session_id = req.session_id or "default"
     state = get_or_create_session(session_id)
 
     # Start or restart flow: ask for state
     if state.step == "done":
-        rows = list_states()
+        try:
+            rows = list_states()
+        except Exception as e:
+            reply = (
+                "డేటాబేస్ కనెక్షన్ లోపం. నేరుగా అడ్మిన్‌ని సంప్రదించండి."
+                if req.lang == "te"
+                else "Database connection error. Contact admin directly."
+            )
+            return ChatResponse(
+                reply=reply,
+                intent_id="land_lookup_error",
+                lang=req.lang,
+                score=1.0,
+                fallback=True,
+            )
+        
         if not rows:
             reply = (
                 "సిస్టంలో ఎలాంటి రాష్ట్రాలు లభ్యం కావట్లేదు."
@@ -430,9 +453,24 @@ def handle_land_lookup(req: ChatRequest) -> ChatResponse:
     # Step 4: enter ROR and show record
     if state.step == "ask_ror":
         ror = msg
-        record = get_land_record(
-            state.state_id, state.district_id, state.mandal_id, ror
-        )
+        try:
+            record = get_land_record(
+                state.state_id, state.district_id, state.mandal_id, ror
+            )
+        except Exception as e:
+            reply = (
+                "డేటాబేస్ లోపం. దయచేసి మళ్లీ ప్రయత్నించండి."
+                if req.lang == "te"
+                else "Database error. Please try again."
+            )
+            state.step = "done"
+            return ChatResponse(
+                reply=reply,
+                intent_id="land_lookup_error",
+                lang=req.lang,
+                score=1.0,
+                fallback=True,
+            )
         state.step = "done"
 
         if record:
@@ -480,7 +518,6 @@ def handle_land_lookup(req: ChatRequest) -> ChatResponse:
     )
 
 # ---------- MAIN CHAT ENDPOINT ----------
-
 @app.post("/chat", response_model=ChatResponse, tags=["chat"])
 def chat(request: ChatRequest):
     """
@@ -559,3 +596,7 @@ def chat(request: ChatRequest):
         score=score,
         fallback=is_fallback,
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
